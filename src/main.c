@@ -104,14 +104,16 @@ void open_file_and_find_prime_factors_multithread()
 
 void open_file_and_find_prime_factors_workerthread()
 {
-    //open file
-    FILE *f = fopen("numbers.txt", "r");
-    
     pthread_t firstThread , secondThread;
     int crdu;
     
     
-    pthread_mutex_init(&lock, NULL);     //create mutex in order to use fscanf safely and printf
+    
+    FILE *f = fopen("numbers.txt", "r");      //open file
+    
+    pthread_mutex_init(&lock, NULL);     //create mutex in order to use fscanf safely
+    
+    
     
     //create first thread
     crdu = pthread_create(&firstThread,NULL,(void*)readNumber,(void*)f);
@@ -131,7 +133,7 @@ void open_file_and_find_prime_factors_workerthread()
     
     
     
-    pthread_mutex_destroy(&lock);
+    pthread_mutex_destroy(&lock);  //destroy mutex
     fclose(f);
 }
 
@@ -143,9 +145,9 @@ void readNumber(FILE *f)
     
     for(;;){ //read file
         
-        pthread_mutex_lock(&lock);
-        bytesRead = fscanf(f, "%llu",&number);
-        pthread_mutex_unlock(&lock);
+        pthread_mutex_lock(&lock);              //Lock file access
+        bytesRead = fscanf(f, "%llu",&number);  //read number from file
+        pthread_mutex_unlock(&lock);            //Unlock file access
         
         if(bytesRead != EOF)
             print_prime_factors(number);
@@ -168,6 +170,9 @@ int main()
     
 //    print_prime_factors(84);
     
+    
+    //open_file_and_find_prime_factors();
+    //open_file_and_find_prime_factors_multithread();
     open_file_and_find_prime_factors_workerthread();
     
 }
