@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "main.h"
+#include <pthread.h>
 
 int is_prime(uint64_t p)
 {
@@ -49,6 +50,7 @@ void print_prime_factors(uint64_t n)
 {
     printf("%llu : ",n);
     find_prime_factors(n);
+    pthread_exit(NULL);
 }
 
 
@@ -56,11 +58,31 @@ void open_file_and_find_prime_factors()
 {
     FILE *f = fopen("numbers.txt", "r");
  
-    uint64_t number;
+    uint64_t numberOne, numberTwo;
     
-    while(fscanf(f, "%llu",&number) != EOF) {
-        print_prime_factors(number);
+    while(fscanf(f, "%llu",&numberOne) != EOF && fscanf(f, "%llu",&numberTwo) != EOF ) {
+        pthread_t firstThread , secondThread;
+        int crdu;
+        
+        
+        crdu = pthread_create(&firstThread,NULL,(void*)print_prime_factors,(void*)numberOne);
+        if(crdu !=0)
+            return;
+            
+        
+        crdu = pthread_create(&secondThread,NULL,(void*)print_prime_factors,(void*)numberTwo);
+        if(crdu != 0)
+            return;
+        
+        
+        //Wait for threads to finish
+        crdu = pthread_join(firstThread, NULL);
+        crdu = pthread_join(secondThread, NULL);
+
+        //print_prime_factors(number);
     }
+    
+    pthread_exit(NULL);
 	fclose(f);
 }
 int main()
