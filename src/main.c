@@ -49,7 +49,8 @@ void print_prime_factors(uint64_t n)
 {
     printf("%llu : ",n);
     find_prime_factors(n);
-    pthread_exit(NULL);
+
+    return;
 }
 
 
@@ -81,7 +82,6 @@ void open_file_and_find_prime_factors()
         //print_prime_factors(number);
     }
     
-    pthread_exit(NULL);
 	fclose(f);
 }
 int main()
