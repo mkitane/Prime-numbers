@@ -54,7 +54,7 @@ void print_prime_factors(uint64_t n)
 
 void open_file_and_find_prime_factors()
 {
-   FILE *f = fopen("numbers.txt", "r");
+    FILE *f = fopen("numbers.txt", "r");
  
     uint64_t number;
     
