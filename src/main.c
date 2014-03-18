@@ -53,23 +53,36 @@ void print_prime_factors(uint64_t n)
     return;
 }
 
-
 void open_file_and_find_prime_factors()
 {
+    FILE *f = fopen("numbers.txt", "r");
+    
+    uint64_t number;
+    
+    while(fscanf(f, "%llu",&number) != EOF) {
+        print_prime_factors(number);
+    }
+	fclose(f);
+}
+
+void open_file_and_find_prime_factors_multithread()
+{
+    //open file
     FILE *f = fopen("numbers.txt", "r");
  
     uint64_t numberOne, numberTwo;
     
-    while(fscanf(f, "%llu",&numberOne) != EOF && fscanf(f, "%llu",&numberTwo) != EOF ) {
+    while(fscanf(f, "%llu",&numberOne) != EOF && fscanf(f, "%llu",&numberTwo) != EOF ) { //read file
         pthread_t firstThread , secondThread;
         int crdu;
         
         
+        //create first thread
         crdu = pthread_create(&firstThread,NULL,(void*)print_prime_factors,(void*)numberOne);
         if(crdu !=0)
             return;
             
-        
+        //create second thread
         crdu = pthread_create(&secondThread,NULL,(void*)print_prime_factors,(void*)numberTwo);
         if(crdu != 0)
             return;
@@ -84,6 +97,42 @@ void open_file_and_find_prime_factors()
     
 	fclose(f);
 }
+
+void open_file_and_find_prime_factors_workerthread()
+{
+    //open file
+    FILE *f = fopen("numbers.txt", "r");
+    
+    pthread_t firstThread , secondThread;
+    int crdu;
+    
+    
+    //create first thread
+    crdu = pthread_create(&firstThread,NULL,(void*)print_prime_factors,NULL);
+    if(crdu !=0)
+        return;
+    
+    //create second thread
+    crdu = pthread_create(&secondThread,NULL,(void*)print_prime_factors,NULL);
+    if(crdu != 0)
+        return;
+    
+
+
+    uint64_t number;
+    while(fscanf(f, "%llu",&number) != EOF ) { //read file
+        
+        //Wait for threads to finish
+        crdu = pthread_join(firstThread, NULL);
+        crdu = pthread_join(secondThread, NULL);
+        
+        //print_prime_factors(number);
+    }
+    
+	fclose(f);
+}
+
+void readNumber(File *f)
 int main()
 {
     
@@ -96,6 +145,6 @@ int main()
     
 //    print_prime_factors(84);
     
-    open_file_and_find_prime_factors();
+    open_file_and_find_prime_factors_multithread();
     
 }
