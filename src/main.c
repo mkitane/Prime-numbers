@@ -6,8 +6,6 @@
 
 int is_prime(uint64_t p)
 {
-
-
     if(p==2){
         return 1; 
     }
@@ -39,7 +37,7 @@ void find_prime_factors(uint64_t n)
     for(i=2; i< n ; i++){
         if(n%i == 0 && is_prime(i) == 1){
             printf("%llu ", i);
-            find_prime_factors((int)n/i);
+            find_prime_factors((uint64_t)n/i);
             return;
         }
     }
@@ -60,10 +58,10 @@ void open_file_and_find_prime_factors()
  
     uint64_t number;
     
-    while(fscanf(f, "%llu",&number) != 0) {
+    while(fscanf(f, "%llu",&number) != EOF) {
         print_prime_factors(number);
     }
-
+	fclose(f);
 }
 int main()
 {
