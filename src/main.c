@@ -38,11 +38,10 @@ void find_prime_factors(uint64_t n)
     for(i=2; i< n ; i++){
         if(n%i == 0 && is_prime(i) == 1){
             printf("%llu ", i);
-            find_prime_factors((uint64_t)n/i);
-            return;
+            break;
         }
     }
-
+	find_prime_factors((uint64_t)n/i);
 }
 
 
