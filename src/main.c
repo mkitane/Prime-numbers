@@ -111,9 +111,7 @@ void open_file_and_find_prime_factors_workerthread()
     int crdu;
     
     
-    //create mutex in order to use fscanf safely and printf
-    pthread_mutex_init(&lock, NULL);
-    
+    pthread_mutex_init(&lock, NULL);     //create mutex in order to use fscanf safely and printf
     
     //create first thread
     crdu = pthread_create(&firstThread,NULL,(void*)readNumber,(void*)f);
@@ -131,24 +129,32 @@ void open_file_and_find_prime_factors_workerthread()
     crdu = pthread_join(firstThread, NULL);
     crdu = pthread_join(secondThread, NULL);
     
+    
+    
+    pthread_mutex_destroy(&lock);
     fclose(f);
 }
 
 void readNumber(FILE *f)
 {
     uint64_t number;
+    int bytesRead = 0 ;
     
-    pthread_mutex_lock(&lock);
-    while(fscanf(f, "%llu",&number) != EOF ) { //read file
-        pthread_mutex_unlock(&lock);
-        
-        print_prime_factors(number);
+    
+    for(;;){ //read file
         
         pthread_mutex_lock(&lock);
+        bytesRead = fscanf(f, "%llu",&number);
+        pthread_mutex_unlock(&lock);
+        
+        if(bytesRead != EOF)
+            print_prime_factors(number);
+        else
+            break;
+   
     }
     
-    pthread_mutex_unlock(&lock);
-
+    return;
 }
 int main()
 {
