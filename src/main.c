@@ -5,6 +5,9 @@
 #include "main.h"
 #include <pthread.h>
 
+//TODO
+#define MAX_FACTORS 1024
+
 
 static pthread_mutex_t lock;
 
@@ -22,6 +25,7 @@ int is_prime(uint64_t p)
     uint64_t i;
     //Si echoue on verifie qu'avec les nombres impaires
     for(i=3 ; i<(int)sqrt(p) ; i+=2){
+		printf("5194030259500054261   %llu\n",i);
         if(p%i==0){
             return 0;
         }
@@ -48,11 +52,87 @@ void find_prime_factors(uint64_t n)
 	find_prime_factors((uint64_t)n/i);
 }
 
+uint64_t find_next_prime_factor(uint64_t n)
+{
+	uint64_t i;
+	
+	if(is_prime(n) == 1){
+        return n;
+    }
+    
+    for(i=2; i< n ; i++){
+        if(n%i == 0 && is_prime(i) == 1){
+            return i;
+        }
+    }
+}
+
+int get_prime_factors(uint64_t n, uint64_t* dest)
+{
+	int nb_fact = 0, bool = 0;
+	uint64_t i = 2;
+	
+	/*while( i < n && n != 0)
+	{
+		//printf("i : %llu    threadID : %d    n : %llu\n",i,pthread_self(),n);
+		if(is_prime(n))
+		{
+			dest[nb_fact] = n;
+			nb_fact++;
+			break;
+		}
+		if( n % i == 0 && is_prime(i) == 1 )
+		{
+			dest[nb_fact] = i;
+			n = n / i;
+			nb_fact++;
+		}
+		else
+		{
+			i++;
+		}
+	}*/
+	
+	for(;;)
+	{
+		if(is_prime(n) == 1)
+		{
+			dest[nb_fact] = n;
+			nb_fact++;
+			break;
+		}
+		else if (n == 0)
+		{
+			break;
+		}
+		else
+		{
+			dest[nb_fact] = find_next_prime_factor(n);
+			n /= dest[nb_fact];
+			nb_fact++;
+		}
+	}
+	
+	return nb_fact;
+}
 
 void print_prime_factors(uint64_t n)
 {
-    printf("%llu : ",n);
-    find_prime_factors(n);
+    /*printf("%llu : ",n);
+    find_prime_factors(n);*/
+    
+    uint64_t factors[MAX_FACTORS];
+    
+    int j,k;
+    
+	k = get_prime_factors(n,factors);
+	
+	printf("%llu: ",n);
+	for(j=0; j<k; j++)
+	{
+		printf("%llu ",factors[j]);
+	}
+	printf("\n");
 
     return;
 }
@@ -147,6 +227,7 @@ void readNumber(FILE *f)
         
         pthread_mutex_lock(&lock);              //Lock file access
         bytesRead = fscanf(f, "%llu",&number);  //read number from file
+        //printf("TID : %d     %llu\n",pthread_self(),number);
         pthread_mutex_unlock(&lock);            //Unlock file access
         
         if(bytesRead != EOF)
