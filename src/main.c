@@ -10,7 +10,8 @@
 
 
 static pthread_mutex_t lock;
-
+static uint64_t ** tab;
+static pthread_mutex_t lockTab;
 
 int is_prime(uint64_t p)
 {
@@ -52,48 +53,30 @@ void find_prime_factors(uint64_t n)
 	find_prime_factors((uint64_t)n/i);
 }
 
+
+
+//-----Q8-----//
 uint64_t find_next_prime_factor(uint64_t n)
 {
 	uint64_t i;
-	
-	if(is_prime(n) == 1){
-        return n;
-    }
-    
     for(i=2; i< n ; i++){
         if(n%i == 0 && is_prime(i) == 1){
             return i;
         }
     }
+    return n;
 }
 
 int get_prime_factors(uint64_t n, uint64_t* dest)
 {
-	int nb_fact = 0, bool = 0;
-	uint64_t i = 2;
+	int nb_fact = 0;
 	
-	/*while( i < n && n != 0)
-	{
-		//printf("i : %llu    threadID : %d    n : %llu\n",i,pthread_self(),n);
-		if(is_prime(n))
-		{
-			dest[nb_fact] = n;
-			nb_fact++;
-			break;
-		}
-		if( n % i == 0 && is_prime(i) == 1 )
-		{
-			dest[nb_fact] = i;
-			n = n / i;
-			nb_fact++;
-		}
-		else
-		{
-			i++;
-		}
-	}*/
-	
-	for(;;)
+    if (n == 0)
+    {
+        return nb_fact;
+    }
+    
+    for(;;)
 	{
 		if(is_prime(n) == 1)
 		{
@@ -101,11 +84,7 @@ int get_prime_factors(uint64_t n, uint64_t* dest)
 			nb_fact++;
 			break;
 		}
-		else if (n == 0)
-		{
-			break;
-		}
-		else
+        else
 		{
 			dest[nb_fact] = find_next_prime_factor(n);
 			n /= dest[nb_fact];
@@ -137,6 +116,10 @@ void print_prime_factors(uint64_t n)
     return;
 }
 
+
+
+
+//---------------------------------Methods------//
 void open_file_and_find_prime_factors()
 {
     FILE *f = fopen("numbers.txt", "r");
