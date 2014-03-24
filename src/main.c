@@ -6,12 +6,70 @@
 #include <pthread.h>
 
 //TODO
-#define MAX_FACTORS 1024
-
+#define MAX_FACTORS 64
+#define MAX_TAB (UINT32_MAX)
 
 static pthread_mutex_t lock;
-static uint64_t tab[UINT32_MAX][MAX_FACTORS];
+static uint64_t tab[MAX_TAB][MAX_FACTORS];
 static pthread_mutex_t lockTab;
+
+
+//-------------Methods to implement the Hash table
+// Hash function
+uint64_t hash(uint64_t toHash) {
+    // 2 XOR shifts and one multiplication
+    toHash ^= toHash >> 23;
+    toHash *= 0x2127599bf4325c37ULL;
+    toHash ^= toHash >> 47;
+    
+    // Modulo to restrict results
+    toHash %= MAX_TAB;
+    //printf("%llu\n", toHash);
+    return toHash;
+}
+int isTheRightNumber(uint64_t number)
+{
+    
+    uint64_t supposedNumber = 1;
+    int j = 0;
+    uint64_t n = hash(number);
+    
+    
+    pthread_mutex_lock(&lockTab); //Lock file access
+    while(tab[n][j] != 0){
+        supposedNumber *= tab[n][j];
+        j++;
+    }
+    pthread_mutex_unlock(&lockTab);            //Unlock file access
+    
+    
+    if(supposedNumber==number){
+        return 1;
+    }
+    return 0;
+}
+void copyToTab(uint64_t hashn, uint64_t *dest, int nb_fact){
+    //Si le nombre na pa deja été memorisé, on le fait
+    pthread_mutex_lock(&lockTab); //Lock file access
+    for(int i = 0; i < nb_fact ; i++){
+        tab[hashn][i] = dest[i];
+    }
+    pthread_mutex_unlock(&lockTab);            //Unlock file access
+}
+int copyToDest(uint64_t index, uint64_t *dest, int nb_fact){
+    int j = 0;
+    
+    pthread_mutex_lock(&lockTab); //Lock file access
+    while(tab[index][j] != 0){
+        dest[j] = tab[index][j];
+        j++;
+        nb_fact++;
+    }
+    pthread_mutex_unlock(&lockTab);            //Unlock file access
+
+    return nb_fact;
+}
+
 
 int is_prime(uint64_t p)
 {
@@ -70,7 +128,7 @@ uint64_t find_next_prime_factor(uint64_t n)
 int get_prime_factors(uint64_t n, uint64_t* dest)
 {
     uint64_t ndepart = n;
-    
+    uint64_t hashn = hash(n);
     
 	int nb_fact = 0;
 	
@@ -81,27 +139,17 @@ int get_prime_factors(uint64_t n, uint64_t* dest)
     
     
     pthread_mutex_lock(&lockTab); //Lock file access
-    uint64_t tabempty = tab[n][0];
+    uint64_t tabempty = tab[hashn][0];
     pthread_mutex_unlock(&lockTab);            //Unlock file access
-
+    
     
     
     //On recupere le nombre mémorisé si on l'a deja
     if(tabempty != 0){         //cad que l'on a deja la décomposition
-        printf("deja presente direct\n");
-
-        
-        pthread_mutex_lock(&lockTab); //Lock file access
-        int j = 0;
-        while(tab[n][j] != 0){
-            dest[j] = tab[n][j];
-            j++;
-            nb_fact++;
+        printf("deja presente direct pour %llu\n",n);
+        if(isTheRightNumber(ndepart) == 1){
+            return copyToDest(hashn, dest, nb_fact);
         }
-        pthread_mutex_unlock(&lockTab);            //Unlock file access
-
-        
-        return nb_fact;
     }
     
     
@@ -110,7 +158,7 @@ int get_prime_factors(uint64_t n, uint64_t* dest)
 		if(is_prime(n) == 1)
 		{
             pthread_mutex_lock(&lockTab);               //Lock file access
-            tab[n][0] = n;
+            tab[hash(n)][0] = n;
             pthread_mutex_unlock(&lockTab);            //Unlock file access
 			dest[nb_fact] = n;
 			nb_fact++;
@@ -118,18 +166,16 @@ int get_prime_factors(uint64_t n, uint64_t* dest)
 		}
         else
 		{
-            if(tab[n][0] != 0){//Si la décomp est deja presente, on la recupere
-                printf("deja presente\n");
-                pthread_mutex_lock(&lockTab); //Lock file access
-                int j = 0;
-                while(tab[n][j] != 0){
-                    dest[nb_fact]=tab[n][j];
-                    j++;
+            if(tab[hash(n)][0] != 0){//Si la décomp est deja presente, on la recupere
+                if(isTheRightNumber(n) ==1){
+                    printf("deja presente pour %llu\n",n);
+                    nb_fact = copyToDest(hash(n), dest, nb_fact);
+                    break;
+                }else{
+                    dest[nb_fact] = find_next_prime_factor(n);
+                    n /= dest[nb_fact];
                     nb_fact++;
                 }
-                pthread_mutex_unlock(&lockTab);            //Unlock file access
-
-                break;
             }else{
                 dest[nb_fact] = find_next_prime_factor(n);
                 n /= dest[nb_fact];
@@ -139,14 +185,8 @@ int get_prime_factors(uint64_t n, uint64_t* dest)
 	}
 	
     
-    //Si le nombre na pa deja été memorisé, on le fait
-    pthread_mutex_lock(&lockTab); //Lock file access
-    for(int i = 0; i < nb_fact ; i++){
-        tab[ndepart][i] = dest[i];
-    }
-    pthread_mutex_unlock(&lockTab);            //Unlock file access
+    copyToTab(hashn, dest, nb_fact);
     
-
 	return nb_fact;
 }
 
