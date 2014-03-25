@@ -38,7 +38,7 @@ int isTheRightNumber(uint64_t number)
     pthread_mutex_lock(&lockTab); //Lock file access
     while(tab[n][j] != 0){
         supposedNumber *= tab[n][j];
-        j++;
+        j++; 
     }
     pthread_mutex_unlock(&lockTab);            //Unlock file access
     
@@ -59,7 +59,7 @@ void copyToTab(uint64_t hashn, uint64_t *dest, int nb_fact){
 }
 int copyToDest(uint64_t index, uint64_t *dest, int nb_fact){
     int j = 0;
-    
+     
     pthread_mutex_lock(&lockTab); //Lock file access
     while(tab[index][j] != 0){
         dest[j] = tab[index][j];
@@ -76,18 +76,21 @@ int is_prime(uint64_t p)
 {
     uint64_t racine = (uint64_t) sqrt(p);
 
-    if(p==2){
+    if(p==2 || p==3 || p==5){
         return 1;
     }
     //Test par 2
-    if(p%2==0){
+    if(p%2==0 || p%3==0 || p%5==0){
         return 0;
     }
     
     uint64_t i;
     //Si echoue on verifie qu'avec les nombres impaires
-    for(i=3 ; i<racine ; i+=2){
-        if(p%i==0){
+    for(i=11 ; i<racine ; i+=6){
+        if(p%(i-4)==0 && is_prime((i-4))){
+            return 0;
+        }
+        if(p%(i)==0 && is_prime((i))){
             return 0;
         }
     }
@@ -125,10 +128,19 @@ uint64_t find_next_prime_factor(uint64_t n)
         return 2;
     }
     
+if(n%3==0){
+	return 3;
+}
+if(n%5 == 0){
+	return 5;
+}
     uint64_t i;
     //Si echoue on verifie qu'avec les nombres impaires
-    for(i=3 ; i<racine ; i+=2){
-        if(n%i==0 && is_prime(i)){
+    for(i=11 ; i<racine ; i+=6){
+        if(n%(i-4)==0 && is_prime((i-4))){
+            return (i-4);
+        }
+        if(n%(i)==0 && is_prime((i))){
             return i;
         }
     }
@@ -177,10 +189,11 @@ int get_prime_factors(uint64_t n, uint64_t* dest)
 		}
         else
 		{
-            if(tab[hash(n)][0] != 0){//Si la décomp est deja presente, on la recupere
+		uint64_t hasshedn = hash(n); 
+            if(tab[hasshedn][0] != 0){//Si la décomp est deja presente, on la recupere
                 if(isTheRightNumber(n) ==1){
                     //printf("deja presente pour %llu\n",n);
-                    nb_fact = copyToDest(hash(n), dest, nb_fact);
+                    nb_fact = copyToDest(hasshedn, dest, nb_fact);
                     break;
                 }else{
                     dest[nb_fact] = find_next_prime_factor(n);
