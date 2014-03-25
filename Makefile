@@ -11,7 +11,7 @@ RMFLAGS = -f
 .PHONY : $(CLEAN)
 
 $(EXE) : src/main.c
-	$(EDL) $(EXEFLAGS) -o $(EXE) $< -lm
+	$(EDL) $(EXEFLAGS) -o $(EXE) $< -lm -lpthread
 
 $(CLEAN) :
 	$(RM) $(RMFLAGS) *.o $(EXE) core

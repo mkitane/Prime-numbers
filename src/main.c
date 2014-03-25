@@ -7,7 +7,7 @@
 
 //TODO
 #define MAX_FACTORS 64
-#define MAX_TAB (UINT32_MAX)
+#define MAX_TAB 500000
 
 static pthread_mutex_t lock;
 static uint64_t tab[MAX_TAB][MAX_FACTORS];
@@ -49,9 +49,10 @@ int isTheRightNumber(uint64_t number)
     return 0;
 }
 void copyToTab(uint64_t hashn, uint64_t *dest, int nb_fact){
+    int i;
     //Si le nombre na pa deja été memorisé, on le fait
     pthread_mutex_lock(&lockTab); //Lock file access
-    for(int i = 0; i < nb_fact ; i++){
+    for(i = 0; i < nb_fact ; i++){
         tab[hashn][i] = dest[i];
     }
     pthread_mutex_unlock(&lockTab);            //Unlock file access
@@ -73,6 +74,8 @@ int copyToDest(uint64_t index, uint64_t *dest, int nb_fact){
 
 int is_prime(uint64_t p)
 {
+    uint64_t racine = (uint64_t) sqrt(p);
+
     if(p==2){
         return 1;
     }
@@ -83,8 +86,7 @@ int is_prime(uint64_t p)
     
     uint64_t i;
     //Si echoue on verifie qu'avec les nombres impaires
-    for(i=3 ; i<(int)sqrt(p) ; i+=2){
-		//printf("5194030259500054261   %llu\n",i);
+    for(i=3 ; i<racine ; i+=2){
         if(p%i==0){
             return 0;
         }
@@ -116,13 +118,22 @@ void find_prime_factors(uint64_t n)
 //-----Q8-----//
 uint64_t find_next_prime_factor(uint64_t n)
 {
-	uint64_t i;
-    for(i=2; i< n ; i++){
-        if(n%i == 0 && is_prime(i) == 1){
+     uint64_t racine = (uint64_t) sqrt(n);
+
+    //Test par 2
+    if(n%2==0){
+        return 2;
+    }
+    
+    uint64_t i;
+    //Si echoue on verifie qu'avec les nombres impaires
+    for(i=3 ; i<racine ; i+=2){
+        if(n%i==0 && is_prime(i)){
             return i;
         }
     }
-    return n;
+    return n; //si premier
+    
 }
 
 int get_prime_factors(uint64_t n, uint64_t* dest)
@@ -146,7 +157,7 @@ int get_prime_factors(uint64_t n, uint64_t* dest)
     
     //On recupere le nombre mémorisé si on l'a deja
     if(tabempty != 0){         //cad que l'on a deja la décomposition
-        printf("deja presente direct pour %llu\n",n);
+        //printf("deja presente direct pour %llu\n",n);
         if(isTheRightNumber(ndepart) == 1){
             return copyToDest(hashn, dest, nb_fact);
         }
@@ -168,7 +179,7 @@ int get_prime_factors(uint64_t n, uint64_t* dest)
 		{
             if(tab[hash(n)][0] != 0){//Si la décomp est deja presente, on la recupere
                 if(isTheRightNumber(n) ==1){
-                    printf("deja presente pour %llu\n",n);
+                    //printf("deja presente pour %llu\n",n);
                     nb_fact = copyToDest(hash(n), dest, nb_fact);
                     break;
                 }else{
@@ -177,7 +188,7 @@ int get_prime_factors(uint64_t n, uint64_t* dest)
                     nb_fact++;
                 }
             }else{
-                dest[nb_fact] = find_next_prime_factor(n);
+                    dest[nb_fact] = find_next_prime_factor(n);
                 n /= dest[nb_fact];
                 nb_fact++;
             }
@@ -262,7 +273,7 @@ void open_file_and_find_prime_factors_multithread()
 
 void open_file_and_find_prime_factors_workerthread()
 {
-    pthread_t firstThread , secondThread;
+    pthread_t firstThread , secondThread, thirdThread;
     int crdu;
     
     
@@ -284,11 +295,19 @@ void open_file_and_find_prime_factors_workerthread()
         return;
     
     
+        //create first thread
+    crdu = pthread_create(&thirdThread,NULL,(void*)readNumber,(void*)f);
+    if(crdu !=0)
+        return;
     
+
+
+
     //Wait for threads to finish
     crdu = pthread_join(firstThread, NULL);
     crdu = pthread_join(secondThread, NULL);
-    
+    crdu = pthread_join(thirdThread, NULL);
+
     
     
     pthread_mutex_destroy(&lock);  //destroy mutex
