@@ -87,10 +87,10 @@ int is_prime(uint64_t p)
     uint64_t i;
     //Si echoue on verifie qu'avec les nombres impaires
     for(i=11 ; i<racine ; i+=6){
-        if(p%(i-4)==0 && is_prime((i-4))){
+        if(p%(i-4)==0){
             return 0;
         }
-        if(p%(i)==0 && is_prime((i))){
+        if(p%(i)==0){
             return 0;
         }
     }
